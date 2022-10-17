@@ -44,10 +44,10 @@ class FlexConversationService {
     };
 }
 
-async sendUserMessage(conversationSid, identity, messageBody) {
-    
-    return this.twilioClient
-        .conversations.conversations(conversationSid)
+async sendUserMessage(conversationSid, identity, messageBody) {    
+
+    return this.twilioClient.conversations.v1
+    .conversations(conversationSid)
         .messages.create({
             body: messageBody,
             author: identity,
@@ -55,10 +55,11 @@ async sendUserMessage(conversationSid, identity, messageBody) {
         })
 }
 
- async  sendWelcomeMessage(conversationSid, customerFriendlyName) {
-    
+ async  sendWelcomeMessage(conversationSid, customerFriendlyName) {    
+
     return this.twilioClient
-        .conversations.conversations(conversationSid)
+    .conversations.v1
+    .conversations(conversationSid)
         .messages.create({
             body: `Welcome ${customerFriendlyName}! An agent will be with you in just a moment.`,
             author: "Concierge"
@@ -108,7 +109,7 @@ async refreshToken(token){
 
 async  initWebchatController (formData){
     
-    const $this = this;
+    
 
     const customerFriendlyName = formData?.friendlyName || "Customer";
 
@@ -125,12 +126,10 @@ async  initWebchatController (formData){
     const token = await this.createToken(identity);
 
     // OPTIONAL — if user query is defined
-    if (formData?.query) {
+    if (formData.query!=null) {
         // use it to send a message in behalf of the user with the query as body
-        this.sendUserMessage(conversationSid, identity, formData.query).then(() =>
-            // and then send another message from Concierge, letting the user know that an agent will help them soon
-            $this.sendWelcomeMessage(conversationSid, customerFriendlyName)
-        );
+       await this.sendUserMessage(conversationSid, identity, formData.query)
+       await this.sendWelcomeMessage(conversationSid, customerFriendlyName)
     }
 
    return{
